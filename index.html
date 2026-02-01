@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بازی شباهت مثلث‌ها</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Yekan+Bakh:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1e2a;
+    --border: #252a3a;
+    --accent: #00e5a0;
+    --accent-dim: rgba(0,229,160,0.12);
+    --accent2: #f5a623;
+    --accent2-dim: rgba(245,166,35,0.12);
+    --red: #ff5c6b;
+    --red-dim: rgba(255,92,107,0.12);
+    --blue: #4da6ff;
+    --blue-dim: rgba(77,166,255,0.12);
+    --purple: #b88aff;
+    --text: #dde2ec;
+    --text-muted: #6b7280;
+    --radius: 16px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Yekan Bakh', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 28px 18px 60px;
+    overflow-x: hidden;
+  }
+
+  /* ─── INFO BANNER ─── */
+  .info-banner {
+    max-width: 720px;
+    margin: 0 auto 28px;
+    background: linear-gradient(135deg, #1a1e2a 0%, #151824 100%);
+    border: 1px solid #2e3348;
+    border-radius: 18px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .info-banner::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--blue), var(--accent2));
+  }
+  .info-banner::after {
+    content:'🔺';
+    position:absolute; right:18px; top:50%; transform:translateY(-50%);
+    font-size:2.4rem; opacity:.08;
+  }
+  .info-banner .ib-name {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 10px;
+    letter-spacing: .3px;
+  }
+  .info-banner .ib-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    justify-content: flex-end;
+  }
+  .info-banner .ib-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .78rem;
+    color: var(--text-muted);
+  }
+  .info-banner .ib-item .ib-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .info-banner .ib-item .ib-val {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .info-banner .ib-item .ib-key {
+    color: var(--text-muted);
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .header::after {
+    content:'';
+    position:absolute; bottom:-10px; left:50%; transform:translateX(-50%);
+    width:60px; height:2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .header h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight:900;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header p { color: var(--text-muted); font-size:.85rem; margin-top:6px; }
+
+  /* ─── LAYOUT ─── */
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  @media(max-width:720px) { .layout { grid-template-columns:1fr; } }
+
+  /* ─── INPUT PANEL ─── */
+  .panel {
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 22px;
+  }
+  .panel-title {
+    font-size:.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color: var(--accent);
+    margin-bottom:18px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+
+  /* Criteria tabs */
+  .tabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+  .tab {
+    flex:1; min-width:80px;
+    padding: 8px 10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-family:inherit;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+    text-align:center;
+    transition: all .2s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tab .tag { display:block; font-size:.68rem; font-weight:400; margin-top:2px; opacity:.7; }
+
+  /* Input rows */
+  .input-group { margin-bottom:14px; }
+  .input-label {
+    font-size:.78rem;
+    color: var(--text-muted);
+    margin-bottom:6px;
+    display:flex; justify-content:space-between;
+  }
+  .input-label .unit { color: var(--accent); font-weight:700; font-size:.72rem; }
+  .inputs-row { display:flex; gap:8px; }
+  .inputs-row .inp-label {
+    flex:1;
+    position:relative;
+    min-width:0;
+  }
+  .inp-label span {
+    position:absolute; top:50%; left:10px; transform:translateY(-50%);
+    font-size:.75rem; font-weight:700; color: var(--accent); pointer-events:none;
+    z-index:1;
+  }
+  .inp-label input {
+    width:100%;
+    background: var(--surface2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding: 10px 12px 10px 26px;
+    color: var(--text);
+    font-family:inherit;
+    font-size:.92rem;
+    text-align:center;
+    transition: border-color .2s, box-shadow .2s;
+    box-sizing:border-box;
+  }
+  .inp-label input:focus { outline:none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .inp-label input::placeholder { color: var(--text-muted); }
+
+  /* Error */
+  .error-msg {
+    background: var(--red-dim);
+    border:1px solid rgba(255,92,107,0.3);
+    color: var(--red);
+    padding:10px 14px;
+    border-radius:10px;
+    font-size:.8rem;
+    line-height:1.5;
+    margin-top:10px;
+    display:none;
+  }
+  .error-msg.show { display:block; }
+
+  /* Preview of original */
+  .original-preview {
+    margin-top:18px;
+    background: var(--surface2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    display:none;
+  }
+  .original-preview.show { display:block; }
+  .original-preview .op-title { font-size:.72rem; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .original-preview canvas { width:100%; border-radius:8px; }
+
+  /* Generate btn */
+  .btn-gen {
+    width:100%;
+    margin-top:16px;
+    padding: 12px;
+    border-radius:12px;
+    border:none;
+    background: linear-gradient(135deg, var(--accent), #00c88a);
+    color: #0a0c10;
+    font-family:inherit;
+    font-size:.92rem;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .15s, box-shadow .2s;
+  }
+  .btn-gen:hover { transform:translateY(-1px); box-shadow: 0 6px 24px var(--accent-dim); }
+  .btn-gen:active { transform:translateY(0); }
+  .btn-gen:disabled { opacity:.35; cursor:default; transform:none; box-shadow:none; }
+
+  /* ─── RESULT PANEL ─── */
+  .result-area {
+    display:none;
+  }
+  .result-area.show { display:block; }
+
+  .result-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px;
+  }
+  .result-header .rh-title { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color: var(--accent); }
+  .result-header .rh-count { font-size:.72rem; color: var(--text-muted); }
+
+  .similar-grid {
+    display:flex; flex-direction:column; gap:16px;
+  }
+
+  .sim-card {
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    padding:18px;
+    animation: slideIn .35s ease both;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform:translateY(16px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  .sim-card-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:12px;
+  }
+  .sim-badge {
+    font-size:.7rem;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:20px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .badge-sss { background: var(--accent-dim); color: var(--accent); border:1px solid rgba(0,229,160,.25); }
+  .badge-sas { background: var(--accent2-dim); color: var(--accent2); border:1px solid rgba(245,166,35,.25); }
+  .badge-asa { background: var(--blue-dim); color: var(--blue); border:1px solid rgba(77,166,255,.25); }
+
+  .sim-scale {
+    font-size:.72rem;
+    color: var(--text-muted);
+  }
+  .sim-scale strong { color: var(--text); }
+
+  .sim-card canvas { width:100%; border-radius:8px; background:#111418; }
+
+  .sim-info {
+    display:flex; gap:16px; flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .si-item { font-size:.74rem; color: var(--text-muted); }
+  .si-item strong { color: var(--text); font-weight:600; }
+
+  /* ─── LEGEND ─── */
+  .legend {
+    max-width:1100px;
+    margin: 28px auto 0;
+    display:flex; gap:18px; flex-wrap:wrap; justify-content:center;
+  }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:.74rem; color: var(--text-muted); }
+  .legend-color { width:12px; height:12px; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="info-banner">
+  <div class="ib-name">نگار براتی</div>
+  <div class="ib-row">
+    <div class="ib-item">
+      <span class="ib-key">پایه:</span>
+      <span class="ib-val">هشتم</span>
+      <span class="ib-dot"></span>
+    </div>
+    <div class="ib-item">
+      <span class="ib-key">مقطع:</span>
+      <span class="ib-val">متوسطه اول</span>
+      <span class="ib-dot"></span>
+    </div>
+    <div class="ib-item">
+      <span class="ib-key">مدرسه:</span>
+      <span class="ib-val">محمودیه ۱۰</span>
+      <span class="ib-dot"></span>
+    </div>
+    <div class="ib-item">
+      <span class="ib-key">درس:</span>
+      <span class="ib-val">ریاضی</span>
+      <span class="ib-dot"></span>
+    </div>
+    <div class="ib-item">
+      <span class="ib-key">استاد:</span>
+      <span class="ib-val">سرکار خانم بهرامی‌پور</span>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>🔺 بازی شباهت مثلث‌ها</h1>
+  <p>ضلع‌ها و زاویه‌های مثلث خودت رو وارد کن، مثلث‌های شبیه بهش ببین</p>
+</div>
+
+<div class="layout">
+
+  <!-- INPUT SIDE -->
+  <div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div> تعریف مثلث اصلی</div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-mode="free">
+          آزاد
+          <span class="tag">۳ ضلع + ۳ زاویه</span>
+        </button>
+        <button class="tab" data-mode="sss">
+          ض-ض-ض
+          <span class="tag">۳ ضلع</span>
+        </button>
+        <button class="tab" data-mode="sas">
+          ض-ز-ض
+          <span class="tag">۲ ضلع + ۱ زاویه</span>
+        </button>
+        <button class="tab" data-mode="asa">
+          ز-ض-ز
+          <span class="tag">۱ ضلع + ۲ زاویه</span>
+        </button>
+      </div>
+
+      <!-- Inputs container -->
+      <div id="inputsContainer"></div>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <button class="btn-gen" id="btnGenerate" disabled>تولید مثلث‌های شبیه</button>
+
+      <!-- Original preview -->
+      <div class="original-preview" id="origPreview">
+        <div class="op-title">مثلث اصلی شما</div>
+        <canvas id="origCanvas" width="320" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT SIDE -->
+  <div class="result-area" id="resultArea">
+    <div class="result-header">
+      <span class="rh-title">مثلث‌های شبیه</span>
+      <span class="rh-count" id="resultCount"></span>
+    </div>
+    <div class="similar-grid" id="similarGrid"></div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-color" style="background:var(--accent)"></div> ض-ض-ض (SSS)</div>
+  <div class="legend-item"><div class="legend-color" style="background:var(--accent2)"></div> ض-ز-ض (SAS)</div>
+  <div class="legend-item"><div class="legend-color" style="background:var(--blue)"></div> ز-ض-ز (ASA)</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let currentMode = 'free'; // free | sss | sas | asa
+
+// ══════════════════════════════════════════════════
+// RENDER INPUTS
+// ══════════════════════════════════════════════════
+const inputDefs = {
+  free: [
+    { label: 'طول ضلع‌ها', unit: 'سانت', names: ['a','b','c'], type:'side' },
+    { label: 'زاویه‌ها', unit: 'درجه', names: ['α','β','γ'], type:'angle' }
+  ],
+  sss: [
+    { label: 'طول ضلع‌ها', unit: 'سانت', names: ['a','b','c'], type:'side' }
+  ],
+  sas: [
+    { label: 'ضلع اول و دوم', unit: 'سانت', names: ['a','b'], type:'side' },
+    { label: 'زاویه بین دو ضلع (C)', unit: 'درجه', names: ['C'], type:'angle' }
+  ],
+  asa: [
+    { label: 'زاویه اول و دوم', unit: 'درجه', names: ['A','B'], type:'angle' },
+    { label: 'ضلع بین دو زاویه (c)', unit: 'سانت', names: ['c'], type:'side' }
+  ]
+};
+
+function renderInputs() {
+  const container = document.getElementById('inputsContainer');
+  container.innerHTML = '';
+  const defs = inputDefs[currentMode];
+  defs.forEach(group => {
+    const ig = document.createElement('div');
+    ig.className = 'input-group';
+    ig.innerHTML = `<div class="input-label"><span>${group.label}</span><span class="unit">${group.unit}</span></div>`;
+    const row = document.createElement('div');
+    row.className = 'inputs-row';
+    group.names.forEach(name => {
+      const wrap = document.createElement('div');
+      wrap.className = 'inp-label';
+      wrap.innerHTML = `<span>${name}</span><input type="number" min="0" max="999" step="0.1" placeholder="0" data-name="${name}" data-type="${group.type}">`;
+      row.appendChild(wrap);
+    });
+    ig.appendChild(row);
+    container.appendChild(ig);
+  });
+  // events
+  container.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', validate);
+  });
+  validate();
+}
+
+// Tab switch
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    renderInputs();
+    document.getElementById('resultArea').classList.remove('show');
+    document.getElementById('origPreview').classList.remove('show');
+  });
+});
+
+// ══════════════════════════════════════════════════
+// VALIDATE
+// ══════════════════════════════════════════════════
+function getInputs() {
+  const inputs = {};
+  document.querySelectorAll('#inputsContainer input').forEach(inp => {
+    inputs[inp.dataset.name] = parseFloat(inp.value) || 0;
+  });
+  return inputs;
+}
+
+function validate() {
+  const vals = getInputs();
+  const err = document.getElementById('errorMsg');
+  err.classList.remove('show');
+
+  let allFilled = true;
+  document.querySelectorAll('#inputsContainer input').forEach(inp => {
+    if(!inp.value || parseFloat(inp.value) <= 0) allFilled = false;
+  });
+
+  if(!allFilled) { document.getElementById('btnGenerate').disabled = true; return; }
+
+  // ─ validation per mode
+  let errMsg = '';
+  const sides = [], angles = [];
+  document.querySelectorAll('#inputsContainer input').forEach(inp => {
+    if(inp.dataset.type === 'side') sides.push(parseFloat(inp.value));
+    if(inp.dataset.type === 'angle') angles.push(parseFloat(inp.value));
+  });
+
+  if(currentMode === 'free') {
+    // check sides triangle inequality
+    sides.sort((a,b)=>a-b);
+    if(sides[0]+sides[1] <= sides[2]) errMsg = 'نامتساوی مثلث رعایت نشده: مجموع دو ضلع کوچک‌تر باید بزرگ‌تر از ضلع سوم باشد.';
+    // check angles sum
+    const aSum = angles.reduce((s,v)=>s+v,0);
+    if(Math.abs(aSum - 180) > 0.5) errMsg = 'مجموع زاویه‌ها باید ۱۸۰ درجه باشد. فعلاً: ' + aSum.toFixed(1) + '°';
+  }
+  if(currentMode === 'sss') {
+    sides.sort((a,b)=>a-b);
+    if(sides[0]+sides[1] <= sides[2]) errMsg = 'نامتساوی مثلث رعایت نشده.';
+  }
+  if(currentMode === 'sas') {
+    if(vals.C >= 180) errMsg = 'زاویه باید کمتر از ۱۸۰ درجه باشد.';
+  }
+  if(currentMode === 'asa') {
+    if(vals.A + vals.B >= 180) errMsg = 'مجموع دو زاویه باید کمتر از ۱۸۰ درجه باشد.';
+  }
+
+  if(errMsg) {
+    err.textContent = errMsg;
+    err.classList.add('show');
+    document.getElementById('btnGenerate').disabled = true;
+  } else {
+    document.getElementById('btnGenerate').disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// MATH ENGINE – compute full triangle from mode
+// ══════════════════════════════════════════════════
+function toRad(d) { return d * Math.PI / 180; }
+function toDeg(r) { return r * 180 / Math.PI; }
+
+function computeTriangle(mode, vals) {
+  // returns { a, b, c, A, B, C } (sides opposite to angles)
+  let a, b, c, A, B, C;
+
+  if(mode === 'free') {
+    a = vals.a; b = vals.b; c = vals.c;
+    A = vals['α']; B = vals['β']; C = vals['γ'];
+  }
+  else if(mode === 'sss') {
+    a = vals.a; b = vals.b; c = vals.c;
+    // law of cosines to get angles
+    A = toDeg(Math.acos((b*b + c*c - a*a)/(2*b*c)));
+    B = toDeg(Math.acos((a*a + c*c - b*b)/(2*a*c)));
+    C = 180 - A - B;
+  }
+  else if(mode === 'sas') {
+    // a, b are the two sides; C is the included angle (between a and b)
+    a = vals.a; b = vals.b; C = vals.C;
+    // law of cosines: c² = a² + b² - 2ab·cosC
+    c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(toRad(C)));
+    // law of sines: A/sinA = c/sinC
+    A = toDeg(Math.asin(a * Math.sin(toRad(C)) / c));
+    B = 180 - A - C;
+  }
+  else if(mode === 'asa') {
+    // A, B are the two angles; c is the side between them
+    A = vals.A; B = vals.B; c = vals.c;
+    C = 180 - A - B;
+    // law of sines: a/sinA = c/sinC
+    a = c * Math.sin(toRad(A)) / Math.sin(toRad(C));
+    b = c * Math.sin(toRad(B)) / Math.sin(toRad(C));
+  }
+
+  return { a, b, c, A, B, C };
+}
+
+// ──── Place triangle vertices from sides ────
+// vertex B at origin, C at (a, 0), then A from angle B and sides
+function placeTriangle(tri) {
+  // B at origin, C at (a,0)
+  // side a = BC, side b = CA, side c = AB
+  const Bx = 0, By = 0;
+  const Cx = tri.a, Cy = 0;
+  // A: from B, length c at angle B
+  const Ax = tri.c * Math.cos(toRad(tri.B));
+  const Ay = tri.c * Math.sin(toRad(tri.B));
+  return [
+    { x: Ax, y: Ay },   // A
+    { x: Bx, y: By },   // B
+    { x: Cx, y: Cy }    // C
+  ];
+}
+
+// ══════════════════════════════════════════════════
+// DRAW TRIANGLE ON CANVAS
+// ══════════════════════════════════════════════════
+function drawTri(canvas, tri, color, showLabels = true) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  let pts = placeTriangle(tri);
+
+  // find bounding box
+  let minX = Math.min(...pts.map(p=>p.x));
+  let maxX = Math.max(...pts.map(p=>p.x));
+  let minY = Math.min(...pts.map(p=>p.y));
+  let maxY = Math.max(...pts.map(p=>p.y));
+  let triW = maxX - minX, triH = maxY - minY;
+
+  // scale to fit canvas with padding
+  const pad = showLabels ? 38 : 28;
+  const scaleX = (W - pad*2) / triW;
+  const scaleY = (H - pad*2) / triH;
+  const scale = Math.min(scaleX, scaleY, 3.5);
+
+  // center
+  const offX = (W - triW*scale)/2 - minX*scale;
+  const offY = (H - triH*scale)/2 - minY*scale;
+
+  // flip Y (canvas Y is down)
+  pts = pts.map(p => ({
+    x: p.x * scale + offX,
+    y: H - (p.y * scale + offY)
+  }));
+
+  // fill
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.closePath();
+  ctx.fillStyle = color + '18';
+  ctx.fill();
+
+  // stroke
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // vertices dots
+  pts.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+
+  if(!showLabels) return;
+
+  // ── Labels ──
+  ctx.font = '600 11px "Yekan Bakh", sans-serif';
+  ctx.fillStyle = '#6b7280';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const names = ['A','B','C'];
+  const offsets = [
+    { x: 0, y: -12 },
+    { x: -12, y: 10 },
+    { x: 12, y: 10 }
+  ];
+  names.forEach((n, i) => {
+    ctx.fillStyle = color;
+    ctx.font = '700 11px "Yekan Bakh", sans-serif';
+    ctx.fillText(n, pts[i].x + offsets[i].x, pts[i].y + offsets[i].y);
+  });
+
+  // side labels (midpoints)
+  const sideLabels = [
+    { from:1, to:2, label: 'a=' + tri.a.toFixed(1) },   // BC = a
+    { from:2, to:0, label: 'b=' + tri.b.toFixed(1) },   // CA = b
+    { from:0, to:1, label: 'c=' + tri.c.toFixed(1) }    // AB = c
+  ];
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '500 10px "Yekan Bakh", sans-serif';
+  sideLabels.forEach(sl => {
+    const mx = (pts[sl.from].x + pts[sl.to].x)/2;
+    const my = (pts[sl.from].y + pts[sl.to].y)/2;
+    // offset perpendicular
+    const dx = pts[sl.to].x - pts[sl.from].x;
+    const dy = pts[sl.to].y - pts[sl.from].y;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/len * 12;
+    const ny = dx/len * 12;
+    ctx.fillText(sl.label, mx+nx, my+ny);
+  });
+
+  // angle labels (inside triangle near vertex)
+  const angleLabels = [
+    { idx:0, val: tri.A },
+    { idx:1, val: tri.B },
+    { idx:2, val: tri.C }
+  ];
+  ctx.fillStyle = '#f5a623';
+  ctx.font = '600 10px "Yekan Bakh", sans-serif';
+  angleLabels.forEach(al => {
+    // vector from vertex to centroid
+    const cx = (pts[0].x+pts[1].x+pts[2].x)/3;
+    const cy = (pts[0].y+pts[1].y+pts[2].y)/3;
+    const dx = cx - pts[al.idx].x;
+    const dy = cy - pts[al.idx].y;
+    const d = Math.sqrt(dx*dx+dy*dy);
+    const tx = pts[al.idx].x + (dx/d)*22;
+    const ty = pts[al.idx].y + (dy/d)*22;
+    ctx.fillText(al.val.toFixed(0)+'°', tx, ty);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// GENERATE SIMILAR TRIANGLES
+// ══════════════════════════════════════════════════
+function generateSimilar(original) {
+  const results = [];
+  const scales = [0.55, 0.8, 1.3, 1.75, 2.1];
+
+  // ─── SSS: scale all sides ───
+  scales.slice(0,2).forEach((s, i) => {
+    results.push({
+      type: 'sss',
+      scale: s,
+      tri: {
+        a: original.a * s,
+        b: original.b * s,
+        c: original.c * s,
+        A: original.A,
+        B: original.B,
+        C: original.C
+      },
+      explanation: `سه ضلع اصلی به نسبت ${s} ضرب شدند. زاویه‌ها تغییر نکردند.`
+    });
+  });
+
+  // ─── SAS: scale two sides, keep included angle ───
+  scales.slice(2,4).forEach((s, i) => {
+    // keep angle C, scale sides a and b
+    const newA = original.a * s;
+    const newB = original.b * s;
+    const newC_side = Math.sqrt(newA*newA + newB*newB - 2*newA*newB*Math.cos(toRad(original.C)));
+    const newA_ang = toDeg(Math.asin(newA * Math.sin(toRad(original.C)) / newC_side));
+    const newB_ang = 180 - newA_ang - original.C;
+    results.push({
+      type: 'sas',
+      scale: s,
+      tri: {
+        a: newA, b: newB, c: newC_side,
+        A: newA_ang, B: newB_ang, C: original.C
+      },
+      explanation: `ضلع‌های a و b به نسبت ${s} شدند، زاویه C = ${original.C.toFixed(1)}° ثابت مانده.`
+    });
+  });
+
+  // ─── ASA: keep two angles, scale the included side ───
+  const asaScale = scales[4];
+  {
+    const s = asaScale;
+    const newC_side = original.c * s;
+    const newA_side = newC_side * Math.sin(toRad(original.A)) / Math.sin(toRad(original.C));
+    const newB_side = newC_side * Math.sin(toRad(original.B)) / Math.sin(toRad(original.C));
+    results.push({
+      type: 'asa',
+      scale: s,
+      tri: {
+        a: newA_side, b: newB_side, c: newC_side,
+        A: original.A, B: original.B, C: original.C
+      },
+      explanation: `زاویه‌های A و B ثابت، ضلع c به نسبت ${s} شد.`
+    });
+  }
+
+  return results;
+}
+
+// ══════════════════════════════════════════════════
+// RENDER RESULTS
+// ══════════════════════════════════════════════════
+const colorMap = { sss: 'var(--accent)', sas: 'var(--accent2)', asa: 'var(--blue)' };
+const colorHex = { sss: '#00e5a0', sas: '#f5a623', asa: '#4da6ff' };
+const badgeClass = { sss: 'badge-sss', sas: 'badge-sas', asa: 'badge-asa' };
+const badgeLabel = { sss: 'ض-ض-ض (SSS)', sas: 'ض-ز-ض (SAS)', asa: 'ز-ض-ز (ASA)' };
+
+function renderResults(original, similars) {
+  const grid = document.getElementById('similarGrid');
+  grid.innerHTML = '';
+  document.getElementById('resultCount').textContent = similars.length + ' مثلث شبیه';
+  document.getElementById('resultArea').classList.add('show');
+
+  similars.forEach((sim, idx) => {
+    const card = document.createElement('div');
+    card.className = 'sim-card';
+    card.style.animationDelay = idx * 0.08 + 's';
+    card.innerHTML = `
+      <div class="sim-card-header">
+        <span class="sim-badge ${badgeClass[sim.type]}">${badgeLabel[sim.type]}</span>
+        <span class="sim-scale">نسبت شباهت: <strong>×${sim.scale}</strong></span>
+      </div>
+      <canvas class="sim-canvas" width="400" height="200"></canvas>
+      <div class="sim-info">
+        <div class="si-item">ضلع‌ها: <strong>a=${sim.tri.a.toFixed(2)} | b=${sim.tri.b.toFixed(2)} | c=${sim.tri.c.toFixed(2)}</strong></div>
+        <div class="si-item">زاویه‌ها: <strong>${sim.tri.A.toFixed(1)}° | ${sim.tri.B.toFixed(1)}° | ${sim.tri.C.toFixed(1)}°</strong></div>
+      </div>
+      <div style="font-size:.74rem;color:var(--text-muted);margin-top:8px;">${sim.explanation}</div>
+    `;
+    grid.appendChild(card);
+
+    // draw after append
+    requestAnimationFrame(() => {
+      const canvas = card.querySelector('.sim-canvas');
+      drawTri(canvas, sim.tri, colorHex[sim.type]);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════
+// GENERATE BUTTON
+// ══════════════════════════════════════════════════
+document.getElementById('btnGenerate').addEventListener('click', () => {
+  const vals = getInputs();
+  const original = computeTriangle(currentMode, vals);
+
+  // draw original
+  const origPreview = document.getElementById('origPreview');
+  origPreview.classList.add('show');
+  drawTri(document.getElementById('origCanvas'), original, '#00e5a0');
+
+  // generate & render
+  const similars = generateSimilar(original);
+  renderResults(original, similars);
+});
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+renderInputs();
+</script>
+</body>
+</html>
